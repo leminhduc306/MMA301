@@ -1,0 +1,56 @@
+{
+    "albums": [
+        {
+            "id": "1",
+            "title": "Endless Summer Vacation",
+            "artist": "Miley Cyrus",
+            "genre": "Pop",
+            "cover": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+            "year": 2023,
+            "songs": [
+                "1"
+            ],
+            "totalDuration": 212,
+            "description": "A vibrant pop album featuring upbeat tracks"
+        },
+        {
+            "id": "2",
+            "title": "After Hours",
+            "artist": "The Weeknd",
+            "genre": "Synthwave",
+            "cover": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
+            "year": 2019,
+            "songs": [
+                "2"
+            ],
+            "totalDuration": 200,
+            "description": "An atmospheric synthwave masterpiece"
+        },
+        {
+            "id": "3",
+            "title": "Midnights",
+            "artist": "Taylor Swift",
+            "genre": "Pop",
+            "cover": "https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=400",
+            "year": 2022,
+            "songs": [
+                "3"
+            ],
+            "totalDuration": 229,
+            "description": "Late-night confessional pop album"
+        },
+        {
+            "id": "4",
+            "title": "÷",
+            "artist": "Ed Sheeran",
+            "genre": "Pop",
+            "cover": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+            "year": 2017,
+            "songs": [
+                "4"
+            ],
+            "totalDuration": 234,
+            "description": "An intimate album of modern love stories"
+        }
+    ]
+}

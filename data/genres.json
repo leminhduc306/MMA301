@@ -1,0 +1,60 @@
+{
+    "genres": [
+        {
+            "id": "1",
+            "name": "Pop",
+            "icon": "music",
+            "color": "#FF6B6B",
+            "description": "Popular music for everyone"
+        },
+        {
+            "id": "2",
+            "name": "Rock",
+            "icon": "radio",
+            "color": "#4ECDC4",
+            "description": "Rock and roll classics"
+        },
+        {
+            "id": "3",
+            "name": "Hip-Hop",
+            "icon": "mic",
+            "color": "#95E1D3",
+            "description": "Hip-hop and rap beats"
+        },
+        {
+            "id": "4",
+            "name": "Jazz",
+            "icon": "music-note",
+            "color": "#F38181",
+            "description": "Smooth jazz melodies"
+        },
+        {
+            "id": "5",
+            "name": "Electronic",
+            "icon": "disc",
+            "color": "#AA96DA",
+            "description": "Electronic and EDM"
+        },
+        {
+            "id": "6",
+            "name": "Classical",
+            "icon": "note-beamed",
+            "color": "#FCBAD3",
+            "description": "Classical masterpieces"
+        },
+        {
+            "id": "7",
+            "name": "R&B",
+            "icon": "music",
+            "color": "#A8D8EA",
+            "description": "Rhythm and Blues"
+        },
+        {
+            "id": "8",
+            "name": "Country",
+            "icon": "guitar",
+            "color": "#FFD3B6",
+            "description": "Country music"
+        }
+    ]
+}

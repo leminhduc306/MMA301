@@ -1,0 +1,56 @@
+{
+    "songs": [
+        {
+            "id": "1",
+            "title": "Flowers",
+            "artist": "Miley Cyrus",
+            "album": "Endless Summer Vacation",
+            "genre": "Pop",
+            "duration": 212,
+            "url": "https://res.cloudinary.com/dff989w82/video/upload/v1762010718/Không_Thể_Say_jdl5vw.mp3",
+            "cover": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+            "plays": 1500,
+            "likes": 850,
+            "createdAt": "2023-01-15"
+        },
+        {
+            "id": "2",
+            "title": "Blinding Lights",
+            "artist": "The Weeknd",
+            "album": "After Hours",
+            "genre": "Synthwave",
+            "duration": 200,
+            "url": "https://res.cloudinary.com/dff989w82/video/upload/v1762010718/Không_Thể_Say_jdl5vw.mp3",
+            "cover": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
+            "plays": 2000,
+            "likes": 1200,
+            "createdAt": "2022-11-20"
+        },
+        {
+            "id": "3",
+            "title": "Anti-Hero",
+            "artist": "Taylor Swift",
+            "album": "Midnights",
+            "genre": "Pop",
+            "duration": 229,
+            "url": "https://res.cloudinary.com/dff989w82/video/upload/v1762010718/Không_Thể_Say_jdl5vw.mp3",
+            "cover": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
+            "plays": 1800,
+            "likes": 950,
+            "createdAt": "2022-10-21"
+        },
+        {
+            "id": "4",
+            "title": "Shape of You",
+            "artist": "Ed Sheeran",
+            "album": "÷",
+            "genre": "Pop",
+            "duration": 234,
+            "url": "https://res.cloudinary.com/dff989w82/video/upload/v1762010718/Không_Thể_Say_jdl5vw.mp3",
+            "cover": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+            "plays": 2500,
+            "likes": 1500,
+            "createdAt": "2017-01-06"
+        }
+    ]
+}
