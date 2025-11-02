@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext } from "react"
 import {
   View,
   ScrollView,
@@ -8,82 +8,79 @@ import {
   Text,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { AuthContext } from '../context/AuthContext';
+} from "react-native"
+import { AuthContext } from "../context/AuthContext"
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, updateProfile, changePassword, logout } = useContext(AuthContext);
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showPasswordFields, setShowPasswordFields] = useState(false);
+  const { user, updateProfile, changePassword, logout } =
+    useContext(AuthContext)
+  const [displayName, setDisplayName] = useState(user?.displayName || "")
+  const [email, setEmail] = useState(user?.email || "")
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [showPasswordFields, setShowPasswordFields] = useState(false)
 
   const handleUpdateProfile = async () => {
     try {
-      setLoading(true);
-      await updateProfile({ displayName });
-      Alert.alert('Success', 'Profile updated successfully');
+      setLoading(true)
+      await updateProfile({ displayName })
+      Alert.alert("Success", "Profile updated successfully")
     } catch (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert("Error", error.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all password fields');
-      return;
+      Alert.alert("Error", "Please fill in all password fields")
+      return
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match');
-      return;
+      Alert.alert("Error", "New passwords do not match")
+      return
     }
 
     if (newPassword.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
-      return;
+      Alert.alert("Error", "Password must be at least 6 characters")
+      return
     }
 
     try {
-      setLoading(true);
+      setLoading(true)
       // In a real app, you'd verify the current password first
-      await changePassword(newPassword);
-      Alert.alert('Success', 'Password changed successfully');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setShowPasswordFields(false);
+      await changePassword(newPassword)
+      Alert.alert("Success", "Password changed successfully")
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
+      setShowPasswordFields(false)
     } catch (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert("Error", error.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', onPress: () => { } },
-        {
-          text: 'Logout',
-          onPress: async () => {
-            try {
-              await logout();
-            } catch (error) {
-              Alert.alert('Error', error.message);
-            }
-          },
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", onPress: () => {} },
+      {
+        text: "Logout",
+        onPress: async () => {
+          try {
+            await logout()
+          } catch (error) {
+            Alert.alert("Error", error.message)
+          }
         },
-      ]
-    );
-  };
+      },
+    ])
+  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -120,8 +117,7 @@ const ProfileScreen = ({ navigation }) => {
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
           onPress={handleUpdateProfile}
-          disabled={loading}
-        >
+          disabled={loading}>
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
@@ -135,10 +131,9 @@ const ProfileScreen = ({ navigation }) => {
       <View style={styles.section}>
         <TouchableOpacity
           style={styles.expandButton}
-          onPress={() => setShowPasswordFields(!showPasswordFields)}
-        >
+          onPress={() => setShowPasswordFields(!showPasswordFields)}>
           <Text style={styles.sectionTitle}>
-            Change Password {showPasswordFields ? '▼' : '▶'}
+            Change Password {showPasswordFields ? "▼" : "▶"}
           </Text>
         </TouchableOpacity>
 
@@ -186,8 +181,7 @@ const ProfileScreen = ({ navigation }) => {
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleChangePassword}
-              disabled={loading}
-            >
+              disabled={loading}>
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
@@ -204,30 +198,30 @@ const ProfileScreen = ({ navigation }) => {
         <TouchableOpacity
           style={[styles.logoutButton, loading && styles.buttonDisabled]}
           onPress={handleLogout}
-          disabled={loading}
-        >
+          disabled={loading}>
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
+    paddingTop: 30,
   },
   header: {
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#262626',
+    borderBottomColor: "#262626",
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
   },
   section: {
     paddingHorizontal: 20,
@@ -235,8 +229,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
     marginBottom: 20,
   },
   expandButton: {
@@ -247,58 +241,58 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#888',
+    color: "#888",
     marginBottom: 8,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   input: {
-    backgroundColor: '#262626',
+    backgroundColor: "#262626",
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#404040',
+    borderColor: "#404040",
   },
   disabledInput: {
     opacity: 0.6,
   },
   hint: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
     marginTop: 6,
   },
   button: {
-    backgroundColor: '#1DB954',
+    backgroundColor: "#1DB954",
     borderRadius: 10,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   logoutButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: "#FF6B6B",
     borderRadius: 10,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   logoutButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   divider: {
     height: 1,
-    backgroundColor: '#262626',
+    backgroundColor: "#262626",
   },
-});
+})
 
-export default ProfileScreen;
+export default ProfileScreen

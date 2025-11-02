@@ -1,14 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  Text,
-  Slider,
-} from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MusicContext } from '../context/MusicContext';
+import React, { useContext, useEffect, useState } from "react"
+import { View, StyleSheet, Image, TouchableOpacity, Text } from "react-native"
+import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { MusicContext } from "../context/MusicContext"
+import Slider from "@react-native-community/slider"
 
 const PlayerScreen = () => {
   const {
@@ -24,39 +18,32 @@ const PlayerScreen = () => {
     seek,
     isFavorite,
     toggleFavorite,
-  } = useContext(MusicContext);
+  } = useContext(MusicContext)
 
   const formatTime = (ms) => {
-    if (!ms) return '0:00';
-    const seconds = Math.floor(ms / 1000);
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
+    if (!ms) return "0:00"
+    const seconds = Math.floor(ms / 1000)
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`
+  }
 
   if (!currentSong) {
     return (
       <View style={styles.container}>
         <View style={styles.placeholderContent}>
-          <MaterialCommunityIcons
-            name="music"
-            size={80}
-            color="#404040"
-          />
+          <MaterialCommunityIcons name="music" size={80} color="#404040" />
           <Text style={styles.placeholderText}>No song playing</Text>
         </View>
       </View>
-    );
+    )
   }
 
   return (
     <View style={styles.container}>
       {/* Album Art */}
       <View style={styles.artworkContainer}>
-        <Image
-          source={{ uri: currentSong.cover }}
-          style={styles.artwork}
-        />
+        <Image source={{ uri: currentSong.cover }} style={styles.artwork} />
       </View>
 
       {/* Song Info */}
@@ -75,12 +62,11 @@ const PlayerScreen = () => {
       {/* Favorite Button */}
       <TouchableOpacity
         style={styles.favoriteContainer}
-        onPress={() => toggleFavorite(currentSong)}
-      >
+        onPress={() => toggleFavorite(currentSong)}>
         <MaterialCommunityIcons
-          name={isFavorite(currentSong.id) ? 'heart' : 'heart-outline'}
+          name={isFavorite(currentSong.id) ? "heart" : "heart-outline"}
           size={32}
-          color={isFavorite(currentSong.id) ? '#FF6B6B' : '#888'}
+          color={isFavorite(currentSong.id) ? "#FF6B6B" : "#888"}
         />
       </TouchableOpacity>
 
@@ -103,10 +89,7 @@ const PlayerScreen = () => {
 
       {/* Controls */}
       <View style={styles.controlsContainer}>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={playPrevious}
-        >
+        <TouchableOpacity style={styles.controlButton} onPress={playPrevious}>
           <MaterialCommunityIcons
             name="skip-previous"
             size={40}
@@ -116,104 +99,88 @@ const PlayerScreen = () => {
 
         <TouchableOpacity
           style={styles.playButton}
-          onPress={isPlaying ? pauseSong : resumeSong}
-        >
+          onPress={isPlaying ? pauseSong : resumeSong}>
           <MaterialCommunityIcons
-            name={isPlaying ? 'pause-circle' : 'play-circle'}
+            name={isPlaying ? "pause-circle" : "play-circle"}
             size={70}
             color="#1DB954"
           />
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={playNext}
-        >
-          <MaterialCommunityIcons
-            name="skip-next"
-            size={40}
-            color="#1DB954"
-          />
+        <TouchableOpacity style={styles.controlButton} onPress={playNext}>
+          <MaterialCommunityIcons name="skip-next" size={40} color="#1DB954" />
         </TouchableOpacity>
       </View>
 
       {/* Stats */}
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <MaterialCommunityIcons
-            name="play"
-            size={20}
-            color="#888"
-          />
+          <MaterialCommunityIcons name="play" size={20} color="#888" />
           <Text style={styles.statText}>{currentSong.plays}</Text>
         </View>
         <View style={styles.statItem}>
-          <MaterialCommunityIcons
-            name="heart"
-            size={20}
-            color="#FF6B6B"
-          />
+          <MaterialCommunityIcons name="heart" size={20} color="#FF6B6B" />
           <Text style={styles.statText}>{currentSong.likes}</Text>
         </View>
       </View>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
     paddingHorizontal: 20,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     paddingVertical: 20,
   },
   placeholderContent: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   placeholderText: {
-    color: '#888',
+    color: "#888",
     fontSize: 16,
     marginTop: 16,
   },
   artworkContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
   },
   artwork: {
     width: 280,
     height: 280,
     borderRadius: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
     elevation: 10,
   },
   infoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: 24,
   },
   songTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
     marginBottom: 8,
   },
   artistName: {
     fontSize: 16,
-    color: '#1DB954',
+    color: "#1DB954",
     marginBottom: 4,
   },
   albumName: {
     fontSize: 14,
-    color: '#888',
+    color: "#888",
   },
   favoriteContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: 8,
   },
   progressContainer: {
@@ -224,17 +191,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   timeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   timeText: {
-    color: '#888',
+    color: "#888",
     fontSize: 12,
   },
   controlsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginVertical: 32,
   },
   controlButton: {
@@ -244,21 +211,21 @@ const styles = StyleSheet.create({
     marginHorizontal: 32,
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#262626',
+    borderTopColor: "#262626",
   },
   statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   statText: {
-    color: '#888',
+    color: "#888",
     fontSize: 14,
   },
-});
+})
 
-export default PlayerScreen;
+export default PlayerScreen
