@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from "react"
 import {
   View,
   ScrollView,
@@ -8,46 +8,45 @@ import {
   Image,
   FlatList,
   ActivityIndicator,
-} from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MusicContext } from '../context/MusicContext';
-import { songService } from '../services/songService';
+} from "react-native"
+import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { MusicContext } from "../context/MusicContext"
+import { songService } from "../services/songService"
 
 const AlbumDetailScreen = ({ route, navigation }) => {
-  const { album } = route.params;
-  const { playSong, isFavorite, toggleFavorite } = useContext(MusicContext);
-  const [loading, setLoading] = useState(true);
-  const [songs, setSongs] = useState([]);
+  const { album } = route.params
+  const { playSong, isFavorite, toggleFavorite } = useContext(MusicContext)
+  const [loading, setLoading] = useState(true)
+  const [songs, setSongs] = useState([])
 
   useEffect(() => {
-    loadAlbumSongs();
-  }, [album.id]);
+    loadAlbumSongs()
+  }, [album.id])
 
   const loadAlbumSongs = async () => {
     try {
-      setLoading(true);
+      setLoading(true)
       // Get all songs and filter by album
-      const allSongs = await songService.getAllSongs();
+      const allSongs = await songService.getAllSongs()
       const albumSongs = allSongs.filter(
         (song) => song.album === album.title || song.albumId === album.id
-      );
-      setSongs(albumSongs);
+      )
+      setSongs(albumSongs)
     } catch (error) {
-      console.error('Error loading album songs:', error);
+      console.error("Error loading album songs:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handlePlaySong = (song) => {
-    playSong(song, songs);
-  };
+    playSong(song, songs)
+  }
 
   const renderSongItem = ({ item, index }) => (
     <TouchableOpacity
       style={styles.songItem}
-      onPress={() => handlePlaySong(item)}
-    >
+      onPress={() => handlePlaySong(item)}>
       <Text style={styles.songNumber}>{index + 1}</Text>
       <Image source={{ uri: item.cover }} style={styles.songCover} />
       <View style={styles.songInfo}>
@@ -59,20 +58,20 @@ const AlbumDetailScreen = ({ route, navigation }) => {
         </Text>
       </View>
       <Text style={styles.songDuration}>
-        {Math.floor(item.duration / 60)}:{String(item.duration % 60).padStart(2, '0')}
+        {Math.floor(item.duration / 60)}:
+        {String(item.duration % 60).padStart(2, "0")}
       </Text>
       <TouchableOpacity
         onPress={() => toggleFavorite(item)}
-        style={styles.favoriteButton}
-      >
+        style={styles.favoriteButton}>
         <MaterialCommunityIcons
-          name={isFavorite(item.id) ? 'heart' : 'heart-outline'}
+          name={isFavorite(item.id) ? "heart" : "heart-outline"}
           size={24}
-          color={isFavorite(item.id) ? '#FF6B6B' : '#888'}
+          color={isFavorite(item.id) ? "#FF6B6B" : "#888"}
         />
       </TouchableOpacity>
     </TouchableOpacity>
-  );
+  )
 
   return (
     <View style={styles.container}>
@@ -80,8 +79,7 @@ const AlbumDetailScreen = ({ route, navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
+          style={styles.backButton}>
           <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Album</Text>
@@ -91,8 +89,7 @@ const AlbumDetailScreen = ({ route, navigation }) => {
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {/* Album Info */}
         <View style={styles.albumHeader}>
           <Image source={{ uri: album.cover }} style={styles.albumCover} />
@@ -102,7 +99,7 @@ const AlbumDetailScreen = ({ route, navigation }) => {
             <Text style={styles.albumYear}>{album.year}</Text>
             <Text style={styles.albumDot}>•</Text>
             <Text style={styles.albumSongCount}>
-              {songs.length} {songs.length === 1 ? 'song' : 'songs'}
+              {songs.length} {songs.length === 1 ? "song" : "songs"}
             </Text>
           </View>
           {album.description && (
@@ -114,8 +111,7 @@ const AlbumDetailScreen = ({ route, navigation }) => {
         {songs.length > 0 && (
           <TouchableOpacity
             style={styles.playAllButton}
-            onPress={() => handlePlaySong(songs[0])}
-          >
+            onPress={() => handlePlaySong(songs[0])}>
             <MaterialCommunityIcons name="play-circle" size={28} color="#fff" />
             <Text style={styles.playAllText}>Play All</Text>
           </TouchableOpacity>
@@ -125,10 +121,18 @@ const AlbumDetailScreen = ({ route, navigation }) => {
         <View style={styles.songsSection}>
           <Text style={styles.songsTitle}>Songs</Text>
           {loading ? (
-            <ActivityIndicator color="#1DB954" size="large" style={{ marginTop: 20 }} />
+            <ActivityIndicator
+              color="#1DB954"
+              size="large"
+              style={{ marginTop: 20 }}
+            />
           ) : songs.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="music-off" size={64} color="#404040" />
+              <MaterialCommunityIcons
+                name="music-off"
+                size={64}
+                color="#404040"
+              />
               <Text style={styles.emptyText}>No songs in this album</Text>
             </View>
           ) : (
@@ -143,31 +147,32 @@ const AlbumDetailScreen = ({ route, navigation }) => {
         </View>
       </ScrollView>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
+    paddingTop: 30,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#262626',
+    borderBottomColor: "#262626",
   },
   backButton: {
     padding: 4,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
   },
   content: {
     flex: 1,
@@ -176,7 +181,7 @@ const styles = StyleSheet.create({
     paddingBottom: 70,
   },
   albumHeader: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 32,
     paddingHorizontal: 20,
   },
@@ -185,7 +190,7 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 12,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -193,44 +198,44 @@ const styles = StyleSheet.create({
   },
   albumTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
     marginBottom: 8,
   },
   albumArtist: {
     fontSize: 16,
-    color: '#1DB954',
+    color: "#1DB954",
     marginBottom: 12,
   },
   albumStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   albumYear: {
-    color: '#888',
+    color: "#888",
     fontSize: 14,
   },
   albumDot: {
-    color: '#888',
+    color: "#888",
     marginHorizontal: 8,
   },
   albumSongCount: {
-    color: '#888',
+    color: "#888",
     fontSize: 14,
   },
   albumDescription: {
-    color: '#aaa',
+    color: "#aaa",
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 20,
   },
   playAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1DB954',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#1DB954",
     marginHorizontal: 20,
     marginBottom: 24,
     paddingVertical: 14,
@@ -238,9 +243,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   playAllText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   songsSection: {
     paddingHorizontal: 20,
@@ -248,22 +253,22 @@ const styles = StyleSheet.create({
   },
   songsTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
     marginBottom: 16,
   },
   songItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#262626',
+    borderBottomColor: "#262626",
   },
   songNumber: {
-    color: '#888',
+    color: "#888",
     fontSize: 14,
     width: 30,
-    textAlign: 'center',
+    textAlign: "center",
   },
   songCover: {
     width: 50,
@@ -275,17 +280,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   songTitle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 4,
   },
   songArtist: {
-    color: '#888',
+    color: "#888",
     fontSize: 12,
   },
   songDuration: {
-    color: '#888',
+    color: "#888",
     fontSize: 12,
     marginRight: 12,
   },
@@ -293,16 +298,15 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 40,
   },
   emptyText: {
-    color: '#888',
+    color: "#888",
     fontSize: 14,
     marginTop: 16,
   },
-});
+})
 
-export default AlbumDetailScreen;
-
+export default AlbumDetailScreen
