@@ -12,11 +12,13 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AuthContext } from '../context/AuthContext';
+import { MusicContext } from '../context/MusicContext';
 import aiMusicService from '../services/aiMusicService';
 import { songService } from '../services/songService';
 
 const MusicGeneratorScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
+  const { playSong } = useContext(MusicContext);
 
   // Form states
   const [description, setDescription] = useState('');
@@ -138,8 +140,8 @@ const MusicGeneratorScreen = ({ navigation }) => {
       setGeneratedTitle(songData.title);
 
       setProgress({ step: 7, message: 'Saving to database...' });
-      await songService.createSong(songData, user.uid);
-      console.log('[AI][Firestore] Saved successfully')
+      const savedSong = await songService.createSong(songData, user.uid);
+      console.log('[AI][Firestore] Saved successfully, songId=', savedSong.id)
 
       setGenerating(false);
 
@@ -150,8 +152,11 @@ const MusicGeneratorScreen = ({ navigation }) => {
         `Genre: ${songData.genre}`,
         [
           {
-            text: 'View Lyrics',
-            onPress: () => setShowLyrics(true),
+            text: '▶ Play Now',
+            onPress: () => {
+              // Play song using MusicContext - will appear in mini player
+              playSong(savedSong, [savedSong]);
+            },
           },
           {
             text: 'Go to Home',
