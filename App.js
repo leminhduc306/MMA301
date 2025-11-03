@@ -26,6 +26,7 @@ import AdminScreen from "./screens/AdminScreen"
 import AlbumDetailScreen from "./screens/AlbumDetailScreen"
 import GenreDetailScreen from "./screens/GenreDetailScreen"
 import GuestProfileScreen from "./screens/GuestProfileScreen"
+import MusicGeneratorScreen from "./screens/MusicGeneratorScreen"
 
 // Components
 import MiniPlayer from "./components/MiniPlayer"
@@ -121,6 +122,17 @@ const AdminStack = () => {
         headerShown: false,
       }}>
       <Stack.Screen name="AdminMain" component={AdminScreen} />
+    </Stack.Navigator>
+  )
+}
+
+const AIStack = () => {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}>
+      <Stack.Screen name="AIMain" component={MusicGeneratorScreen} />
     </Stack.Navigator>
   )
 }
@@ -248,6 +260,20 @@ const AppTabs = () => {
                   />
                 ),
                 tabBarLabel: "Favorites",
+              }}
+            />
+            <Tab.Screen
+              name="AI"
+              component={AIStack}
+              options={{
+                tabBarIcon: ({ color, size }) => (
+                  <MaterialCommunityIcons
+                    name="robot"
+                    size={size}
+                    color={color}
+                  />
+                ),
+                tabBarLabel: "AI Music",
               }}
             />
           </>
