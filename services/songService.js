@@ -63,12 +63,14 @@ export const songService = {
     }
   },
 
-  // Create song (Admin)
-  createSong: async (songData) => {
+  // Create song (Admin or User)
+  createSong: async (songData, userId) => {
     try {
       const docRef = await db.collection(SONGS_COLLECTION).add({
         ...songData,
+        createdBy: userId, // Track who created this song
         createdAt: new Date(),
+        updatedAt: new Date(),
         plays: 0,
         likes: 0,
       });
@@ -79,10 +81,30 @@ export const songService = {
     }
   },
 
+  // Get songs by creator
+  getSongsByCreator: async (userId) => {
+    try {
+      const snapshot = await db
+        .collection(SONGS_COLLECTION)
+        .where('createdBy', '==', userId)
+        .get();
+      return snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+    } catch (error) {
+      console.error('Error getting songs by creator:', error);
+      throw error;
+    }
+  },
+
   // Update song
   updateSong: async (songId, updates) => {
     try {
-      await db.collection(SONGS_COLLECTION).doc(songId).update(updates);
+      await db.collection(SONGS_COLLECTION).doc(songId).update({
+        ...updates,
+        updatedAt: new Date(),
+      });
       return { id: songId, ...updates };
     } catch (error) {
       console.error('Error updating song:', error);

@@ -52,7 +52,6 @@ const ProfileScreen = ({ navigation }) => {
 
     try {
       setLoading(true)
-      // In a real app, you'd verify the current password first
       await changePassword(newPassword)
       Alert.alert("Success", "Password changed successfully")
       setCurrentPassword("")
@@ -68,7 +67,7 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleLogout = async () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", onPress: () => {} },
+      { text: "Cancel", onPress: () => { } },
       {
         text: "Logout",
         onPress: async () => {

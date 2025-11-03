@@ -13,29 +13,51 @@ export const AuthProvider = ({ children }) => {
         const unsubscribe = auth.onAuthStateChanged(
             async (firebaseUser) => {
                 if (firebaseUser) {
-                    // Lấy thông tin user từ Firestore
+                    console.log('AuthContext - Firebase User UID:', firebaseUser.uid);
+
+                    // Get user info from Firestore
                     try {
                         const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
                         if (userDoc.exists) {
                             const userData = userDoc.data();
+                            // Create clean user object with only needed properties
                             setUser({
-                                ...firebaseUser,
+                                uid: firebaseUser.uid,
+                                email: firebaseUser.email,
+                                displayName: userData.displayName || firebaseUser.displayName,
                                 role: userData.role,
-                                displayName: userData.displayName,
+                                photoURL: firebaseUser.photoURL,
                             });
                             setUserRole(userData.role);
+                            console.log('AuthContext - User loaded with UID:', firebaseUser.uid);
                         } else {
-                            setUser(firebaseUser);
+                            // Default to USER role if no document exists
+                            setUser({
+                                uid: firebaseUser.uid,
+                                email: firebaseUser.email,
+                                displayName: firebaseUser.displayName,
+                                role: 'USER',
+                                photoURL: firebaseUser.photoURL,
+                            });
                             setUserRole('USER');
+                            console.log('AuthContext - User loaded (no doc) with UID:', firebaseUser.uid);
                         }
                     } catch (error) {
                         console.error('Error fetching user data:', error);
-                        setUser(firebaseUser);
+                        // Fallback to basic user object
+                        setUser({
+                            uid: firebaseUser.uid,
+                            email: firebaseUser.email,
+                            displayName: firebaseUser.displayName,
+                            role: 'USER',
+                            photoURL: firebaseUser.photoURL,
+                        });
                         setUserRole('USER');
                     }
                 } else {
                     setUser(null);
                     setUserRole(null);
+                    console.log('AuthContext - User logged out');
                 }
                 setLoading(false);
             },
@@ -54,12 +76,12 @@ export const AuthProvider = ({ children }) => {
             const result = await auth.createUserWithEmailAndPassword(email, password);
             await result.user.updateProfile({ displayName });
 
-            // Lưu user info vào Firestore
+            // Save user info to Firestore with USER role by default
             await db.collection('users').doc(result.user.uid).set({
                 uid: result.user.uid,
                 email: result.user.email,
                 displayName: displayName,
-                role: 'USER', // Mặc định là USER
+                role: 'USER', // Default role
                 phone: '',
                 address: '',
                 avatar: '',
@@ -109,7 +131,23 @@ export const AuthProvider = ({ children }) => {
     const updateProfile = async (updates) => {
         try {
             setError(null);
-            await user.updateProfile(updates);
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+                throw new Error('No user logged in');
+            }
+
+            // Update Firebase Auth profile
+            await currentUser.updateProfile(updates);
+
+            // Update Firestore
+            if (currentUser.uid) {
+                await db.collection('users').doc(currentUser.uid).update({
+                    ...updates,
+                    updatedAt: new Date(),
+                });
+            }
+
+            // Update local state
             setUser({ ...user, ...updates });
         } catch (err) {
             setError(err.message);
@@ -120,7 +158,11 @@ export const AuthProvider = ({ children }) => {
     const changePassword = async (newPassword) => {
         try {
             setError(null);
-            await user.updatePassword(newPassword);
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+                throw new Error('No user logged in');
+            }
+            await currentUser.updatePassword(newPassword);
         } catch (err) {
             setError(err.message);
             throw err;

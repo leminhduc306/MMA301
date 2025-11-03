@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   Text,
   Alert,
-  Image,
+  Modal,
+  Pressable,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AuthContext } from '../context/AuthContext';
 
 const LoginScreen = ({ navigation }) => {
@@ -26,6 +28,8 @@ const LoginScreen = ({ navigation }) => {
     try {
       setLoading(true);
       await login(email, password);
+      // Close the login modal after successful login
+      navigation.goBack();
     } catch (err) {
       Alert.alert('Login Failed', err.message);
     } finally {
@@ -34,11 +38,32 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>ZingMP3</Text>
-        <Text style={styles.subtitle}>Music is Life</Text>
-      </View>
+    <Modal
+      visible={true}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => navigation.goBack()}
+    >
+      <Pressable 
+        style={styles.modalOverlay} 
+        onPress={() => navigation.goBack()}
+      >
+        <Pressable 
+          style={styles.modalContent} 
+          onPress={(e) => e.stopPropagation()}
+        >
+          <TouchableOpacity 
+            style={styles.closeButton}
+            onPress={() => navigation.goBack()}
+          >
+            <MaterialCommunityIcons name="close" size={24} color="#888" />
+          </TouchableOpacity>
+
+          <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+            <View style={styles.header}>
+              <Text style={styles.title}>ZingMP3</Text>
+              <Text style={styles.subtitle}>Music is Life</Text>
+            </View>
 
       <View style={styles.form}>
         <TextInput
@@ -90,18 +115,43 @@ const LoginScreen = ({ navigation }) => {
           <Text style={styles.registerText}>Don't have an account? Register</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxWidth: 500,
+    maxHeight: '80%',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 10,
+    padding: 8,
+    backgroundColor: '#262626',
+    borderRadius: 20,
+  },
+  container: {
     backgroundColor: '#1a1a1a',
   },
   header: {
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: 40,
     paddingHorizontal: 20,
   },
   title: {

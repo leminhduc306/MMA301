@@ -49,12 +49,14 @@ export const genreService = {
   /**
    * Create new genre
    * @param {Object} genreData - Genre data
+   * @param {string} userId - User ID who created this genre
    * @returns {Promise<Object>} Created genre
    */
-  createGenre: async (genreData) => {
+  createGenre: async (genreData, userId) => {
     try {
       const newGenre = {
         ...genreData,
+        createdBy: userId, // Track who created this genre
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       };
@@ -67,6 +69,27 @@ export const genreService = {
       };
     } catch (error) {
       console.error('Error creating genre:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get genres by creator
+   * @param {string} userId - User ID
+   * @returns {Promise<Array>} List of genres created by user
+   */
+  getGenresByCreator: async (userId) => {
+    try {
+      const snapshot = await db
+        .collection(GENRES_COLLECTION)
+        .where('createdBy', '==', userId)
+        .get();
+      return snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+    } catch (error) {
+      console.error('Error getting genres by creator:', error);
       throw error;
     }
   },

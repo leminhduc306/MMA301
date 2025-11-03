@@ -128,25 +128,13 @@ const AdminStack = () => {
 const AppTabs = () => {
   const { user, userRole } = useContext(AuthContext)
 
-  // Debug: Log userRole
-  useEffect(() => {
-    console.log("=== AppTabs userRole ===", userRole)
-  }, [userRole])
-
   return (
     <View style={{ flex: 1 }}>
       <Tab.Navigator
-        key={userRole || "loading"} // Force re-render khi userRole thay đổi
         tabBar={(props) => {
-          // Debug: Log tất cả routes
-          console.log(
-            "=== TabBar routes ===",
-            props.state.routes.map((r) => r.name)
-          )
-
           return (
             <View>
-              {/* MiniPlayer - Chỉ hiển thị cho USER, ẩn cho ADMIN */}
+              {/* MiniPlayer - Show for non-admin or when not logged in */}
               {userRole !== "ADMIN" && <MiniPlayer />}
               <View
                 style={{
@@ -164,8 +152,8 @@ const AppTabs = () => {
                     options.tabBarLabel !== undefined
                       ? options.tabBarLabel
                       : options.title !== undefined
-                      ? options.title
-                      : route.name
+                        ? options.title
+                        : route.name
                   const isFocused = props.state.index === index
                   const IconComponent = options.tabBarIcon
 
@@ -217,7 +205,7 @@ const AppTabs = () => {
         screenOptions={{
           headerShown: false,
         }}>
-        {/* USER tabs - Chỉ hiển thị khi KHÔNG phải ADMIN */}
+        {/* User tabs - Show when not ADMIN */}
         {userRole !== "ADMIN" && (
           <>
             <Tab.Screen
@@ -265,7 +253,7 @@ const AppTabs = () => {
           </>
         )}
 
-        {/* Profile tab - Hiển thị cho tất cả users */}
+        {/* Profile tab - Always visible */}
         <Tab.Screen
           name="Profile"
           component={ProfileStack}
@@ -281,16 +269,20 @@ const AppTabs = () => {
           }}
         />
 
-        {/* ADMIN tab - Chỉ hiển thị khi là ADMIN */}
-        {userRole === "ADMIN" && (
+        {/* Admin/Upload tab - Only visible when logged in */}
+        {user && (
           <Tab.Screen
             name="Admin"
             component={AdminStack}
             options={{
               tabBarIcon: ({ color, size }) => (
-                <MaterialCommunityIcons name="cog" size={size} color={color} />
+                <MaterialCommunityIcons
+                  name={userRole === "ADMIN" ? "shield-account" : "upload"}
+                  size={size}
+                  color={color}
+                />
               ),
-              tabBarLabel: "Admin",
+              tabBarLabel: userRole === "ADMIN" ? "Admin" : "Upload",
             }}
           />
         )}
@@ -318,10 +310,10 @@ const RootNavigator = () => {
   return (
     <NavigationContainer theme={{ ...DarkTheme }}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {/* Luôn vào Tabs trước, không chặn bởi login */}
+        {/* Always show main tabs first, not blocked by login */}
         <Stack.Screen name="MainTabs" component={AppTabs} />
 
-        {/* Auth screens hiển thị dưới dạng modal khi người dùng chủ động chọn Đăng nhập/Đăng ký */}
+        {/* Auth screens displayed as modals when user chooses to login/register */}
         <Stack.Screen
           name="Login"
           component={LoginScreen}

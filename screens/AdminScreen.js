@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View,
   ScrollView,
@@ -15,18 +15,22 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import { AuthContext } from '../context/AuthContext';
 import { songService } from '../services/songService';
 import { albumService } from '../services/albumService';
 import { genreService } from '../services/genreService';
+import { userService } from '../services/userService';
 import cloudinaryService from '../services/cloudinaryService';
 
 const AdminScreen = ({ navigation }) => {
-  const [activeTab, setActiveTab] = useState('songs'); // songs, albums, genres
+  const { user, userRole } = useContext(AuthContext);
+  const [activeTab, setActiveTab] = useState('songs'); // songs, albums, genres, users (for ADMIN only)
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [songs, setSongs] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [genres, setGenres] = useState([]);
+  const [users, setUsers] = useState([]); // For ADMIN only
   const [loadingList, setLoadingList] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -78,12 +82,29 @@ const AdminScreen = ({ navigation }) => {
     loadData();
   }, [activeTab]);
 
+  useEffect(() => {
+    // Debug: Check if user is loaded
+    console.log('AdminScreen - User:', user);
+    console.log('AdminScreen - User UID:', user?.uid);
+    console.log('AdminScreen - User Role:', userRole);
+  }, [user, userRole]);
+
   const loadData = async () => {
     try {
       setLoadingList(true);
+
       if (activeTab === 'songs') {
-        const songsData = await songService.getAllSongs();
+        // ADMIN sees all songs, USER sees only their own
+        let songsData;
+        if (userRole === 'ADMIN') {
+          songsData = await songService.getAllSongs();
+        } else if (user && user.uid) {
+          songsData = await songService.getSongsByCreator(user.uid);
+        } else {
+          songsData = [];
+        }
         setSongs(songsData);
+
         // Also load albums and genres for dropdowns
         if (albums.length === 0) {
           const albumsData = await albumService.getAllAlbums();
@@ -94,20 +115,43 @@ const AdminScreen = ({ navigation }) => {
           setGenres(genresData);
         }
       } else if (activeTab === 'albums') {
-        const albumsData = await albumService.getAllAlbums();
+        // ADMIN sees all albums, USER sees only their own
+        let albumsData;
+        if (userRole === 'ADMIN') {
+          albumsData = await albumService.getAllAlbums();
+        } else if (user && user.uid) {
+          albumsData = await albumService.getAlbumsByCreator(user.uid);
+        } else {
+          albumsData = [];
+        }
         setAlbums(albumsData);
+
         // Also load genres for album form dropdown
         if (genres.length === 0) {
           const genresData = await genreService.getAllGenres();
           setGenres(genresData);
         }
       } else if (activeTab === 'genres') {
-        const genresData = await genreService.getAllGenres();
+        // ADMIN sees all genres, USER sees only their own
+        let genresData;
+        if (userRole === 'ADMIN') {
+          genresData = await genreService.getAllGenres();
+        } else if (user && user.uid) {
+          genresData = await genreService.getGenresByCreator(user.uid);
+        } else {
+          genresData = [];
+        }
         setGenres(genresData);
+      } else if (activeTab === 'users' && userRole === 'ADMIN') {
+        // Only ADMIN can see users tab - fetch all users then filter
+        const allUsersData = await userService.getAllUsers();
+        // Filter to only show USER role (not ADMIN)
+        const userRoleOnly = allUsersData.filter(u => u.role === 'USER' || !u.role);
+        setUsers(userRoleOnly);
       }
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert('Error', 'Failed to load data');
+      Alert.alert('Error', 'Failed to load data: ' + error.message);
     } finally {
       setLoadingList(false);
     }
@@ -238,6 +282,12 @@ const AdminScreen = ({ navigation }) => {
       return;
     }
 
+    // Check if user is logged in
+    if (!user || !user.uid) {
+      Alert.alert('Error', 'You must be logged in to create songs');
+      return;
+    }
+
     // Cần file audio hoặc URL (chỉ khi CREATE, không cần khi EDIT)
     if (!isEditMode && !selectedAudioFile && !songForm.url) {
       Alert.alert('Error', 'Please select an audio file or enter Song URL');
@@ -301,7 +351,7 @@ const AdminScreen = ({ navigation }) => {
         });
         Alert.alert('Success', 'Song updated successfully! 🎵');
       } else {
-        // CREATE
+        // CREATE - Pass userId to track creator
         await songService.createSong({
           ...songForm,
           url: audioURL,
@@ -309,7 +359,7 @@ const AdminScreen = ({ navigation }) => {
           duration: parseInt(songForm.duration) || 0,
           plays: 0,
           likes: 0,
-        });
+        }, user.uid);
         Alert.alert('Success', 'Song added successfully! 🎵');
       }
 
@@ -330,6 +380,12 @@ const AdminScreen = ({ navigation }) => {
   const handleSaveAlbum = async () => {
     if (!albumForm.title || !albumForm.artist) {
       Alert.alert('Error', 'Please fill in required fields');
+      return;
+    }
+
+    // Check if user is logged in
+    if (!user || !user.uid) {
+      Alert.alert('Error', 'You must be logged in to create albums');
       return;
     }
 
@@ -367,7 +423,7 @@ const AdminScreen = ({ navigation }) => {
         });
         Alert.alert('Success', 'Album updated successfully! 🎼');
       } else {
-        // CREATE
+        // CREATE - Pass userId to track creator
         await albumService.createAlbum({
           ...albumForm,
           cover: coverURL || 'https://via.placeholder.com/400',
@@ -375,7 +431,7 @@ const AdminScreen = ({ navigation }) => {
           songs: [],
           totalDuration: 0,
           totalSongs: 0,
-        });
+        }, user.uid);
         Alert.alert('Success', 'Album added successfully! 🎼');
       }
 
@@ -446,6 +502,12 @@ const AdminScreen = ({ navigation }) => {
       return;
     }
 
+    // Check if user is logged in
+    if (!user || !user.uid) {
+      Alert.alert('Error', 'You must be logged in to create genres');
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -458,13 +520,13 @@ const AdminScreen = ({ navigation }) => {
         });
         Alert.alert('Success', 'Genre updated successfully! 🎭');
       } else {
-        // CREATE
+        // CREATE - Pass userId to track creator
         await genreService.createGenre({
           name: genreForm.name,
           description: genreForm.description || '',
           icon: 'music', // Default icon
           color: '#1DB954', // Default color
-        });
+        }, user.uid);
         Alert.alert('Success', 'Genre added successfully! 🎭');
       }
 
@@ -618,10 +680,74 @@ const AdminScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
+  // User Management (ADMIN only)
+  const renderUserItem = ({ item }) => (
+    <View style={styles.listItem}>
+      <View style={styles.userAvatar}>
+        <MaterialCommunityIcons name="account" size={32} color="#888" />
+      </View>
+      <View style={styles.itemInfo}>
+        <Text style={styles.itemTitle} numberOfLines={1}>
+          {item.displayName || 'Unknown User'}
+        </Text>
+        <Text style={styles.itemSubtitle}>{item.email}</Text>
+        <Text style={[styles.roleTag, item.role === 'ADMIN' ? styles.adminTag : styles.userTag]}>
+          {item.role || 'USER'}
+        </Text>
+      </View>
+      <TouchableOpacity
+        style={styles.editButton}
+        onPress={() => handleToggleUserRole(item)}
+      >
+        <MaterialCommunityIcons name="account-cog" size={20} color="#1DB954" />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => handleDeleteUser(item.id)}
+      >
+        <MaterialCommunityIcons name="delete" size={20} color="#FF6B6B" />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const handleToggleUserRole = (userItem) => {
+    // Only allow viewing USER accounts, no role changes
+    Alert.alert(
+      'User Information',
+      `Name: ${userItem.displayName || 'Unknown'}\nEmail: ${userItem.email}\nRole: ${userItem.role || 'USER'}\n\nNote: Role management is restricted to protect system integrity.`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleDeleteUser = (userId) => {
+    Alert.alert(
+      'Delete User',
+      'Are you sure you want to delete this user?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await userService.deleteUser(userId);
+              Alert.alert('Success', 'User deleted successfully');
+              loadData();
+            } catch (error) {
+              Alert.alert('Error', error.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Admin Panel</Text>
+        <Text style={styles.headerTitle}>
+          {userRole === 'ADMIN' ? 'Admin Panel' : 'Upload Content'}
+        </Text>
       </View>
 
       {/* Tab Navigation */}
@@ -691,23 +817,51 @@ const AdminScreen = ({ navigation }) => {
             Genres
           </Text>
         </TouchableOpacity>
+
+        {/* Users tab - Only for ADMIN */}
+        {userRole === 'ADMIN' && (
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'users' && styles.activeTab]}
+            onPress={() => {
+              setActiveTab('users');
+              setShowAddForm(false);
+            }}
+          >
+            <MaterialCommunityIcons
+              name="account-group"
+              size={20}
+              color={activeTab === 'users' ? '#1DB954' : '#888'}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'users' && styles.activeTabText,
+              ]}
+            >
+              Users
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.content}>
         {!showAddForm ? (
           <>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => {
-                resetForms(); // Reset trước khi mở form
-                setShowAddForm(true);
-              }}
-            >
-              <MaterialCommunityIcons name="plus" size={24} color="#fff" />
-              <Text style={styles.addButtonText}>
-                Add {activeTab === 'songs' ? 'Song' : activeTab === 'albums' ? 'Album' : 'Genre'}
-              </Text>
-            </TouchableOpacity>
+            {/* Only show Add button if not on users tab */}
+            {activeTab !== 'users' && (
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => {
+                  resetForms(); // Reset trước khi mở form
+                  setShowAddForm(true);
+                }}
+              >
+                <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+                <Text style={styles.addButtonText}>
+                  Add {activeTab === 'songs' ? 'Song' : activeTab === 'albums' ? 'Album' : 'Genre'}
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {loadingList ? (
               <View style={styles.loadingContainer}>
@@ -715,8 +869,18 @@ const AdminScreen = ({ navigation }) => {
               </View>
             ) : (
               <FlatList
-                data={activeTab === 'songs' ? songs : activeTab === 'albums' ? albums : genres}
-                renderItem={activeTab === 'songs' ? renderSongItem : activeTab === 'albums' ? renderAlbumItem : renderGenreItem}
+                data={
+                  activeTab === 'songs' ? songs :
+                    activeTab === 'albums' ? albums :
+                      activeTab === 'genres' ? genres :
+                        activeTab === 'users' ? users : []
+                }
+                renderItem={
+                  activeTab === 'songs' ? renderSongItem :
+                    activeTab === 'albums' ? renderAlbumItem :
+                      activeTab === 'genres' ? renderGenreItem :
+                        activeTab === 'users' ? renderUserItem : null
+                }
                 keyExtractor={(item) => item.id}
                 style={styles.list}
                 contentContainerStyle={styles.listContent}
@@ -724,12 +888,17 @@ const AdminScreen = ({ navigation }) => {
                 ListEmptyComponent={
                   <View style={styles.emptyContainer}>
                     <MaterialCommunityIcons
-                      name={activeTab === 'songs' ? 'music-off' : activeTab === 'albums' ? 'album' : 'apps'}
+                      name={
+                        activeTab === 'songs' ? 'music-off' :
+                          activeTab === 'albums' ? 'album' :
+                            activeTab === 'genres' ? 'apps' :
+                              activeTab === 'users' ? 'account-group' : 'help'
+                      }
                       size={64}
                       color="#404040"
                     />
                     <Text style={styles.emptyText}>
-                      No {activeTab} found. Add some!
+                      No {activeTab} found{activeTab !== 'users' ? '. Add some!' : ''}
                     </Text>
                   </View>
                 }
@@ -1477,6 +1646,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 40,
+  },
+  userAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#262626',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  roleTag: {
+    fontSize: 10,
+    fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  adminTag: {
+    backgroundColor: '#FF6B6B',
+    color: '#fff',
+  },
+  userTag: {
+    backgroundColor: '#1DB954',
+    color: '#fff',
   },
 });
 

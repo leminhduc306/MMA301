@@ -37,7 +37,12 @@ const RegisterScreen = ({ navigation }) => {
     try {
       setLoading(true);
       await register(email, password, displayName);
-      Alert.alert('Success', 'Registration successful!');
+      Alert.alert('Success', 'Registration successful!', [
+        {
+          text: 'OK',
+          onPress: () => navigation.goBack()
+        }
+      ]);
     } catch (err) {
       Alert.alert('Registration Failed', err.message);
     } finally {

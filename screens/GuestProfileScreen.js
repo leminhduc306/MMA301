@@ -8,20 +8,20 @@ const GuestProfileScreen = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Welcome 🎧</Text>
       <Text style={styles.subtitle}>
-        Bạn đang dùng với tư cách khách. Bạn vẫn có thể nghe nhạc, tìm kiếm, xem
-        album/genre và thêm Favorites (lưu cục bộ).
+        You are using as a guest. You can still listen to music, search, browse
+        albums/genres and add Favorites (stored locally).
       </Text>
 
       <TouchableOpacity
         style={[styles.btn, styles.primary]}
         onPress={() => navigation.navigate("Login")}>
-        <Text style={styles.btnText}>Đăng nhập</Text>
+        <Text style={styles.btnText}>Login</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.btn, styles.secondary]}
         onPress={() => navigation.navigate("Register")}>
-        <Text style={styles.secondaryText}>Tạo tài khoản</Text>
+        <Text style={styles.secondaryText}>Create Account</Text>
       </TouchableOpacity>
     </View>
   )

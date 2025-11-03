@@ -45,12 +45,14 @@ export const albumService = {
     }
   },
 
-  // Create album (Admin)
-  createAlbum: async (albumData) => {
+  // Create album (Admin or User)
+  createAlbum: async (albumData, userId) => {
     try {
       const docRef = await db.collection(ALBUMS_COLLECTION).add({
         ...albumData,
+        createdBy: userId, // Track who created this album
         createdAt: new Date(),
+        updatedAt: new Date(),
       });
       return { id: docRef.id, ...albumData };
     } catch (error) {
@@ -59,10 +61,30 @@ export const albumService = {
     }
   },
 
+  // Get albums by creator
+  getAlbumsByCreator: async (userId) => {
+    try {
+      const snapshot = await db
+        .collection(ALBUMS_COLLECTION)
+        .where('createdBy', '==', userId)
+        .get();
+      return snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+    } catch (error) {
+      console.error('Error getting albums by creator:', error);
+      throw error;
+    }
+  },
+
   // Update album
   updateAlbum: async (albumId, updates) => {
     try {
-      await db.collection(ALBUMS_COLLECTION).doc(albumId).update(updates);
+      await db.collection(ALBUMS_COLLECTION).doc(albumId).update({
+        ...updates,
+        updatedAt: new Date(),
+      });
       return { id: albumId, ...updates };
     } catch (error) {
       console.error('Error updating album:', error);
