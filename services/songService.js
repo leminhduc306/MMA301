@@ -121,13 +121,14 @@ export const songService = {
         .update({
           plays: firebase.firestore.FieldValue.increment(1),
         });
+      console.log('Play count incremented for song:', songId);
     } catch (error) {
       console.error('Error incrementing plays:', error);
-      throw error;
+      // Don't throw - let play continue even if increment fails
     }
   },
 
-  // Increment likes
+  // Increment likes (deprecated - use favoriteService instead)
   incrementLikes: async (songId) => {
     try {
       await db
@@ -138,6 +139,23 @@ export const songService = {
         });
     } catch (error) {
       console.error('Error incrementing likes:', error);
+      throw error;
+    }
+  },
+
+  // Update likes count from favorites collection
+  updateLikesCount: async (songId, count) => {
+    try {
+      console.log(`Updating likes count for song ${songId} to ${count}`);
+      await db
+        .collection(SONGS_COLLECTION)
+        .doc(songId)
+        .update({
+          likes: count,
+        });
+      console.log(`Successfully updated likes count for song ${songId}`);
+    } catch (error) {
+      console.error('Error updating likes count:', error);
       throw error;
     }
   },

@@ -8,6 +8,7 @@ import {
   Text,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native"
 import { AuthContext } from "../context/AuthContext"
 
@@ -21,6 +22,7 @@ const ProfileScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [showPasswordFields, setShowPasswordFields] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
   const handleUpdateProfile = async () => {
     try {
@@ -81,8 +83,29 @@ const ProfileScreen = ({ navigation }) => {
     ])
   }
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    // Reload user profile data
+    setDisplayName(user?.displayName || "")
+    setEmail(user?.email || "")
+    setTimeout(() => {
+      setRefreshing(false)
+    }, 500)
+  }, [user])
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#1DB954"
+          colors={["#1DB954"]}
+        />
+      }
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Profile</Text>
       </View>

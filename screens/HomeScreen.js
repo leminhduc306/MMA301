@@ -10,12 +10,14 @@ import {
   ActivityIndicator,
   TextInput,
   ScrollView as HScrollView,
+  RefreshControl,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { MusicContext } from "../context/MusicContext"
 import { songService } from "../services/songService"
 import { albumService } from "../services/albumService"
 import { genreService } from "../services/genreService"
+import SongItem from "../components/SongItem"
 
 const HomeScreen = ({ navigation }) => {
   const { playSong, isFavorite, toggleFavorite } = useContext(MusicContext)
@@ -33,9 +35,18 @@ const HomeScreen = ({ navigation }) => {
 
   // Search results
   const [filteredSongs, setFilteredSongs] = useState([])
+  
+  // Pull to refresh
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     loadData()
+  }, [])
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    await loadData()
+    setRefreshing(false)
   }, [])
 
   const loadData = async () => {
@@ -113,28 +124,10 @@ const HomeScreen = ({ navigation }) => {
   }
 
   const renderSongItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.songItem}
-      onPress={() => handlePlaySong(item, trendingSongs)}>
-      <Image source={{ uri: item.cover }} style={styles.songCover} />
-      <View style={styles.songInfo}>
-        <Text style={styles.songTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <Text style={styles.songArtist} numberOfLines={1}>
-          {item.artist}
-        </Text>
-      </View>
-      <TouchableOpacity
-        onPress={() => toggleFavorite(item)}
-        style={styles.favoriteButton}>
-        <MaterialCommunityIcons
-          name={isFavorite(item.id) ? "heart" : "heart-outline"}
-          size={22}
-          color={isFavorite(item.id) ? "#FF6B6B" : "#888"}
-        />
-      </TouchableOpacity>
-    </TouchableOpacity>
+    <SongItem 
+      song={item} 
+      onPress={() => handlePlaySong(item, trendingSongs)} 
+    />
   )
 
   const renderAlbumItem = ({ item }) => (
@@ -160,7 +153,18 @@ const HomeScreen = ({ navigation }) => {
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#1DB954"
+            colors={["#1DB954"]}
+            title="Loading..."
+            titleColor="#888"
+          />
+        }
+      >
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <MaterialCommunityIcons
@@ -508,7 +512,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 4,
   },
-  songArtist: { color: "#888", fontSize: 12 },
+  songArtist: { color: "#888", fontSize: 12, marginBottom: 4 },
+  songStats: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  statItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  statText: {
+    color: "#888",
+    fontSize: 11,
+  },
   favoriteButton: { padding: 8 },
 
   emptyText: {

@@ -1,38 +1,33 @@
 import React, { useContext } from "react"
 import {
   View,
-  ScrollView,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
   Text,
-  Image,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { MusicContext } from "../context/MusicContext"
+import { AuthContext } from "../context/AuthContext"
+import SongItem from "../components/SongItem"
 
 const FavoritesScreen = () => {
-  const { favorites, playSong, toggleFavorite } = useContext(MusicContext)
+  const { user } = useContext(AuthContext)
+  const { favorites, loadingFavorites, playSong, loadFavorites } = useContext(MusicContext)
+  const [refreshing, setRefreshing] = React.useState(false)
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    await loadFavorites()
+    setRefreshing(false)
+  }, [loadFavorites])
 
   const renderSongItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.songItem}
-      onPress={() => playSong(item, favorites)}>
-      <Image source={{ uri: item.cover }} style={styles.songCover} />
-      <View style={styles.songInfo}>
-        <Text style={styles.songTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <Text style={styles.songArtist} numberOfLines={1}>
-          {item.artist}
-        </Text>
-      </View>
-      <TouchableOpacity
-        onPress={() => toggleFavorite(item)}
-        style={styles.favoriteButton}>
-        <MaterialCommunityIcons name="heart" size={24} color="#FF6B6B" />
-      </TouchableOpacity>
-    </TouchableOpacity>
+    <SongItem 
+      song={item} 
+      onPress={() => playSong(item, favorites)} 
+    />
   )
 
   return (
@@ -44,7 +39,24 @@ const FavoritesScreen = () => {
         )}
       </View>
 
-      {favorites.length === 0 ? (
+      {!user ? (
+        <View style={styles.emptyContainer}>
+          <MaterialCommunityIcons
+            name="account-alert"
+            size={64}
+            color="#404040"
+          />
+          <Text style={styles.emptyText}>Login Required</Text>
+          <Text style={styles.emptySubtext}>
+            Please login to view and manage your favorite songs
+          </Text>
+        </View>
+      ) : loadingFavorites && favorites.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <ActivityIndicator size="large" color="#1DB954" />
+          <Text style={styles.emptyText}>Loading favorites...</Text>
+        </View>
+      ) : favorites.length === 0 ? (
         <View style={styles.emptyContainer}>
           <MaterialCommunityIcons
             name="heart-outline"
@@ -63,6 +75,14 @@ const FavoritesScreen = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#1DB954"
+              colors={["#1DB954"]}
+            />
+          }
         />
       )}
     </View>
@@ -115,35 +135,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     paddingBottom: 70, // Space for MiniPlayer
-  },
-  songItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#262626",
-  },
-  songCover: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  songInfo: {
-    flex: 1,
-  },
-  songTitle: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  songArtist: {
-    color: "#888",
-    fontSize: 12,
-  },
-  favoriteButton: {
-    padding: 8,
   },
 })
 

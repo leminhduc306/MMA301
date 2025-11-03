@@ -11,6 +11,7 @@ import {
   Image,
   ActivityIndicator,
   Modal,
+  RefreshControl,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -34,6 +35,7 @@ const AdminScreen = ({ navigation }) => {
   const [loadingList, setLoadingList] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Dropdown states
   const [showAlbumPicker, setShowAlbumPicker] = useState(false);
@@ -80,6 +82,12 @@ const AdminScreen = ({ navigation }) => {
 
   useEffect(() => {
     loadData();
+  }, [activeTab]);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
   }, [activeTab]);
 
   useEffect(() => {
@@ -885,6 +893,14 @@ const AdminScreen = ({ navigation }) => {
                 style={styles.list}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    tintColor="#1DB954"
+                    colors={["#1DB954"]}
+                  />
+                }
                 ListEmptyComponent={
                   <View style={styles.emptyContainer}>
                     <MaterialCommunityIcons

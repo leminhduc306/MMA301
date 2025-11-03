@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Text,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { genreService } from "../services/genreService"
@@ -14,9 +15,16 @@ import { genreService } from "../services/genreService"
 const GenreScreen = ({ navigation }) => {
   const [genres, setGenres] = useState([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     loadGenres()
+  }, [])
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    await loadGenres()
+    setRefreshing(false)
   }, [])
 
   const loadGenres = async () => {
@@ -70,6 +78,14 @@ const GenreScreen = ({ navigation }) => {
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#1DB954"
+              colors={["#1DB954"]}
+            />
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <MaterialCommunityIcons
