@@ -18,6 +18,7 @@ import { songService } from "../services/songService"
 import { albumService } from "../services/albumService"
 import { genreService } from "../services/genreService"
 import SongItem from "../components/SongItem"
+import { db } from "../firebase"
 
 const HomeScreen = ({ navigation }) => {
   const { playSong, isFavorite, toggleFavorite } = useContext(MusicContext)
@@ -35,13 +36,78 @@ const HomeScreen = ({ navigation }) => {
 
   // Search results
   const [filteredSongs, setFilteredSongs] = useState([])
-  
+
   // Pull to refresh
   const [refreshing, setRefreshing] = useState(false)
 
+  // Setup real-time listeners for songs and albums collections
   useEffect(() => {
     loadData()
-  }, [])
+
+    console.log('Setting up real-time listeners...')
+
+    // Songs listener
+    const unsubscribeSongs = db
+      .collection('songs')
+      .onSnapshot(
+        (snapshot) => {
+          const songsData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+
+          console.log(`Songs updated: ${songsData.length} songs`)
+          setSongs(songsData)
+
+          // Update Hot Today in real-time
+          const pickHot = (list) => {
+            if (!list || list.length === 0) return null
+            return list.reduce((best, cur) => {
+              const bLikes = Number(best.likes || 0)
+              const cLikes = Number(cur.likes || 0)
+              if (cLikes !== bLikes) return cLikes > bLikes ? cur : best
+              const bPlays = Number(best.plays || 0)
+              const cPlays = Number(cur.plays || 0)
+              return cPlays > bPlays ? cur : best
+            })
+          }
+          setHotSong(pickHot(songsData))
+
+          // Update filtered songs if no search query
+          if (!searchQuery) {
+            setFilteredSongs(songsData)
+          }
+        },
+        (error) => {
+          console.error('Error in songs listener:', error)
+        }
+      )
+
+    // Albums listener
+    const unsubscribeAlbums = db
+      .collection('albums')
+      .onSnapshot(
+        (snapshot) => {
+          const albumsData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+
+          console.log(`Albums updated: ${albumsData.length} albums`)
+          setAlbums(albumsData)
+        },
+        (error) => {
+          console.error('Error in albums listener:', error)
+        }
+      )
+
+    return () => {
+      // Cleanup listeners
+      console.log('Cleaning up real-time listeners')
+      if (unsubscribeSongs) unsubscribeSongs()
+      if (unsubscribeAlbums) unsubscribeAlbums()
+    }
+  }, [searchQuery])
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true)
@@ -105,9 +171,9 @@ const HomeScreen = ({ navigation }) => {
       selectedGenre === "All"
         ? songs
         : songs.filter(
-            (s) =>
-              s.genre && s.genre.toLowerCase() === selectedGenre.toLowerCase()
-          )
+          (s) =>
+            s.genre && s.genre.toLowerCase() === selectedGenre.toLowerCase()
+        )
     const sorted = [...base].sort((a, b) => {
       const la = Number(a.likes || 0)
       const lb = Number(b.likes || 0)
@@ -124,9 +190,9 @@ const HomeScreen = ({ navigation }) => {
   }
 
   const renderSongItem = ({ item }) => (
-    <SongItem 
-      song={item} 
-      onPress={() => handlePlaySong(item, trendingSongs)} 
+    <SongItem
+      song={item}
+      onPress={() => handlePlaySong(item, trendingSongs)}
     />
   )
 
@@ -319,9 +385,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>New Albums</Text>
-              <TouchableOpacity onPress={() => navigation.navigate("Albums")}>
-                <Text style={styles.seeAll}>See All</Text>
-              </TouchableOpacity>
+
             </View>
             <FlatList
               data={albums.slice(0, 3)}

@@ -253,22 +253,6 @@ const AppTabs = () => {
           </>
         )}
 
-        {/* Profile tab - Always visible */}
-        <Tab.Screen
-          name="Profile"
-          component={ProfileStack}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons
-                name="account"
-                size={size}
-                color={color}
-              />
-            ),
-            tabBarLabel: "Profile",
-          }}
-        />
-
         {/* Admin/Upload tab - Only visible when logged in */}
         {user && (
           <Tab.Screen
@@ -286,6 +270,22 @@ const AppTabs = () => {
             }}
           />
         )}
+
+        {/* Profile tab - Always visible */}
+        <Tab.Screen
+          name="Profile"
+          component={ProfileStack}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons
+                name="account"
+                size={size}
+                color={color}
+              />
+            ),
+            tabBarLabel: "Profile",
+          }}
+        />
       </Tab.Navigator>
     </View>
   )
