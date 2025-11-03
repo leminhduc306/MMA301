@@ -1,227 +1,278 @@
-import React, { createContext, useState, useCallback, useEffect, useContext } from 'react';
-import { Audio } from 'expo-av';
-import { AuthContext } from './AuthContext';
-import { favoriteService } from '../services/favoriteService';
-import { songService } from '../services/songService';
+// context/MusicContext.js
+import React, {
+  createContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useContext,
+} from "react"
+import { Audio } from "expo-av"
+import firebase from "firebase/compat/app"
+import { db } from "../firebase"
+import { AuthContext } from "../context/AuthContext"
 
-export const MusicContext = createContext();
+export const MusicContext = createContext()
 
 export const MusicProvider = ({ children }) => {
-    const { user } = useContext(AuthContext);
-    const [currentSong, setCurrentSong] = useState(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [playlist, setPlaylist] = useState([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [sound, setSound] = useState(null);
-    const [duration, setDuration] = useState(0);
-    const [position, setPosition] = useState(0);
-    const [favorites, setFavorites] = useState([]);
-    const [favoriteIds, setFavoriteIds] = useState([]); // For quick lookup
-    const [loadingFavorites, setLoadingFavorites] = useState(false);
+  const { user } = useContext(AuthContext)
 
-    const playSong = useCallback(async (song, songList = []) => {
+  // 1 Sound duy nhất
+  const soundRef = useRef(new Audio.Sound())
+  const loadingRef = useRef(false)
+  const lastCountedIdRef = useRef(null)
+  const favUnsubRef = useRef(null)
+
+  const [currentSong, setCurrentSong] = useState(null)
+  const [playlist, setPlaylist] = useState([])
+  const [currentIndex, setCurrentIndex] = useState(-1)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [duration, setDuration] = useState(0)
+  const [position, setPosition] = useState(0)
+
+  // ===== Favorites (theo ID) =====
+  const [favoriteIds, setFavoriteIds] = useState([]) // ['songId1', 'songId2', ...]
+  const [loadingFavorites, setLoadingFavorites] = useState(false)
+
+  useEffect(() => {
+    // cấu hình audio
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      shouldDuckAndroid: true,
+      playThroughEarpieceAndroid: false,
+    })
+
+    return () => {
+      try {
+        soundRef.current.unloadAsync()
+      } catch {}
+      if (favUnsubRef.current) {
+        favUnsubRef.current()
+        favUnsubRef.current = null
+      }
+    }
+  }, [])
+
+  // Subscribe favorites theo user (đang dùng subcollection users/{uid}/favorites)
+  useEffect(() => {
+    // clear trước
+    if (favUnsubRef.current) {
+      favUnsubRef.current()
+      favUnsubRef.current = null
+    }
+    if (!user?.uid) {
+      setFavoriteIds([])
+      return
+    }
+
+    setLoadingFavorites(true)
+    const ref = db.collection("users").doc(user.uid).collection("favorites")
+    favUnsubRef.current = ref.onSnapshot(
+      (snap) => {
+        // mỗi doc có id là songId (vì toggleFavorite dùng .doc(song.id))
+        const ids = snap.docs
+          .map((d) => d.id || d.data()?.songId)
+          .filter(Boolean)
+        setFavoriteIds(ids)
+        setLoadingFavorites(false)
+      },
+      (err) => {
+        console.warn("favorites subscribe error:", err?.message)
+        setLoadingFavorites(false)
+      }
+    )
+
+    return () => {
+      if (favUnsubRef.current) {
+        favUnsubRef.current()
+        favUnsubRef.current = null
+      }
+    }
+  }, [user?.uid])
+
+  const attachStatus = () => {
+    soundRef.current.setOnPlaybackStatusUpdate((status) => {
+      if (!status?.isLoaded) return
+      setDuration(status.durationMillis ?? 0)
+      setPosition(status.positionMillis ?? 0)
+      setIsPlaying(Boolean(status.isPlaying))
+      if (status.didJustFinish) {
+        playNext()
+      }
+    })
+  }
+
+  const loadAndPlay = async (song) => {
+    if (!song?.url) return
+    if (loadingRef.current) return
+    loadingRef.current = true
+    const s = soundRef.current
+
+    try {
+      try {
+        await s.stopAsync()
+      } catch {}
+      try {
+        await s.unloadAsync()
+      } catch {}
+      await s.loadAsync({ uri: song.url }, { shouldPlay: true }, true)
+      attachStatus()
+      setIsPlaying(true)
+
+      // tăng plays 1 lần / mỗi song id
+      if (song.id && lastCountedIdRef.current !== song.id) {
         try {
-            if (sound) {
-                await sound.unloadAsync();
-            }
-
-            const { sound: newSound } = await Audio.Sound.createAsync(
-                { uri: song.url },
-                { shouldPlay: true }
-            );
-
-            setSound(newSound);
-            setCurrentSong(song);
-            setIsPlaying(true);
-            setPlaylist(songList.length > 0 ? songList : [song]);
-            setCurrentIndex(0);
-
-            // Increment play count in background
-            if (song.id) {
-                songService.incrementPlays(song.id).catch(err =>
-                    console.error('Failed to increment play count:', err)
-                );
-            }
-
-            newSound.setOnPlaybackStatusUpdate((status) => {
-                if (status.isLoaded) {
-                    setDuration(status.durationMillis);
-                    setPosition(status.positionMillis);
-                    if (status.didJustFinish) {
-                        playNext();
-                    }
-                }
-            });
-        } catch (error) {
-            console.error('Error playing song:', error);
+          await db
+            .collection("songs")
+            .doc(song.id)
+            .update({
+              plays: firebase.firestore.FieldValue.increment(1),
+            })
+          lastCountedIdRef.current = song.id
+        } catch (e) {
+          console.warn("Increment plays failed:", e?.message)
         }
-    }, [sound]);
+      }
+    } finally {
+      loadingRef.current = false
+    }
+  }
 
-    const pauseSong = useCallback(async () => {
-        if (sound) {
-            await sound.pauseAsync();
-            setIsPlaying(false);
-        }
-    }, [sound]);
+  const playSong = useCallback(
+    async (song, songList = []) => {
+      await loadAndPlay(song)
+      setCurrentSong(song)
 
-    const resumeSong = useCallback(async () => {
-        if (sound) {
-            await sound.playAsync();
-            setIsPlaying(true);
-        }
-    }, [sound]);
+      if (songList.length) {
+        setPlaylist(songList)
+        const idx = songList.findIndex((x) => x.id === song.id)
+        setCurrentIndex(idx >= 0 ? idx : 0)
+      } else if (playlist.length) {
+        const idx = playlist.findIndex((x) => x.id === song.id)
+        setCurrentIndex(idx >= 0 ? idx : 0)
+      } else {
+        setPlaylist([song])
+        setCurrentIndex(0)
+      }
+    },
+    [playlist]
+  )
 
-    const playNext = useCallback(async () => {
-        const nextIndex = (currentIndex + 1) % playlist.length;
-        if (playlist[nextIndex]) {
-            await playSong(playlist[nextIndex], playlist);
-            setCurrentIndex(nextIndex);
-        }
-    }, [currentIndex, playlist, playSong]);
+  const pauseSong = useCallback(async () => {
+    try {
+      await soundRef.current.pauseAsync()
+    } catch {}
+    setIsPlaying(false)
+  }, [])
 
-    const playPrevious = useCallback(async () => {
-        const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
-        if (playlist[prevIndex]) {
-            await playSong(playlist[prevIndex], playlist);
-            setCurrentIndex(prevIndex);
-        }
-    }, [currentIndex, playlist, playSong]);
+  const resumeSong = useCallback(async () => {
+    try {
+      await soundRef.current.playAsync()
+    } catch {}
+    setIsPlaying(true)
+  }, [])
 
-    const seek = useCallback(async (position) => {
-        if (sound) {
-            await sound.setPositionAsync(position);
-            setPosition(position);
-        }
-    }, [sound]);
+  const playNext = useCallback(async () => {
+    if (!playlist.length) return
+    const next = (currentIndex + 1) % playlist.length
+    const song = playlist[next]
+    await loadAndPlay(song)
+    setCurrentSong(song)
+    setCurrentIndex(next)
+  }, [playlist, currentIndex])
 
-    // Subscribe to real-time favorites updates when user logs in
-    useEffect(() => {
-        if (user && user.uid) {
-            console.log('Setting up real-time favorites listener...');
+  const playPrevious = useCallback(async () => {
+    if (!playlist.length) return
+    const prev = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1
+    const song = playlist[prev]
+    await loadAndPlay(song)
+    setCurrentSong(song)
+    setCurrentIndex(prev)
+  }, [playlist, currentIndex])
 
-            // Subscribe to real-time updates
-            const unsubscribe = favoriteService.subscribeToUserFavorites(
-                user.uid,
-                songService.getSongById,
-                (favoriteSongs) => {
-                    setFavorites(favoriteSongs);
-                    setFavoriteIds(favoriteSongs.map(song => song.id));
-                    setLoadingFavorites(false);
-                }
-            );
+  const seek = useCallback(async (posMs) => {
+    try {
+      await soundRef.current.setPositionAsync(posMs)
+    } catch {}
+    setPosition(posMs)
+  }, [])
 
-            // Cleanup subscription on unmount or user change
-            return () => {
-                console.log('Unsubscribing from favorites listener');
-                unsubscribe();
-            };
+  // ======= NEW: helper kiểm tra yêu thích =======
+  const isFavorite = useCallback(
+    (songId) => favoriteIds.includes(songId),
+    [favoriteIds]
+  )
+
+  // ======= Toggle favorite (dùng subcollection users/{uid}/favorites) =======
+  const toggleFavorite = useCallback(
+    async (song) => {
+      if (!song?.id) return
+
+      // Nếu chưa đăng nhập: chỉ cập nhật UI local
+      if (!user?.uid) {
+        setFavoriteIds((prev) =>
+          prev.includes(song.id)
+            ? prev.filter((id) => id !== song.id)
+            : [...prev, song.id]
+        )
+        return
+      }
+
+      const favRef = db
+        .collection("users")
+        .doc(user.uid)
+        .collection("favorites")
+        .doc(song.id)
+      const songRef = db.collection("songs").doc(song.id)
+
+      await db.runTransaction(async (tx) => {
+        const favSnap = await tx.get(favRef)
+        if (favSnap.exists) {
+          // Unfavorite
+          tx.delete(favRef)
+          tx.update(songRef, {
+            likes: firebase.firestore.FieldValue.increment(-1),
+          })
+          setFavoriteIds((prev) => prev.filter((id) => id !== song.id))
         } else {
-            // Clear favorites when user logs out
-            setFavorites([]);
-            setFavoriteIds([]);
-            setLoadingFavorites(false);
+          // Favorite
+          tx.set(favRef, { addedAt: new Date(), songId: song.id })
+          tx.update(songRef, {
+            likes: firebase.firestore.FieldValue.increment(1),
+          })
+          setFavoriteIds((prev) =>
+            prev.includes(song.id) ? prev : [...prev, song.id]
+          )
         }
-    }, [user]);
+      })
+    },
+    [user]
+  )
 
-    const loadFavorites = useCallback(async () => {
-        if (!user || !user.uid) {
-            setFavorites([]);
-            setFavoriteIds([]);
-            return;
-        }
+  return (
+    <MusicContext.Provider
+      value={{
+        currentSong,
+        isPlaying,
+        duration,
+        position,
+        playlist,
+        playSong,
+        pauseSong,
+        resumeSong,
+        playNext,
+        playPrevious,
+        seek,
 
-        try {
-            setLoadingFavorites(true);
-
-            // Get favorite songs with full data
-            const favoriteSongs = await favoriteService.getUserFavoriteSongs(
-                user.uid,
-                songService.getSongById
-            );
-
-            setFavorites(favoriteSongs);
-            setFavoriteIds(favoriteSongs.map(song => song.id));
-
-            console.log(`Loaded ${favoriteSongs.length} favorite songs`);
-        } catch (error) {
-            console.error('Error loading favorites:', error);
-            setFavorites([]);
-            setFavoriteIds([]);
-        } finally {
-            setLoadingFavorites(false);
-        }
-    }, [user]);
-
-    const toggleFavorite = useCallback(async (song) => {
-        if (!user || !user.uid) {
-            console.log('User must be logged in to add favorites');
-            return;
-        }
-
-        try {
-            // Optimistic update
-            const isCurrentlyFavorite = favoriteIds.includes(song.id);
-
-            if (isCurrentlyFavorite) {
-                // Remove from favorites
-                setFavorites(prev => prev.filter(fav => fav.id !== song.id));
-                setFavoriteIds(prev => prev.filter(id => id !== song.id));
-                await favoriteService.removeFavorite(user.uid, song.id);
-
-                // Update song likes count
-                const newCount = await favoriteService.getFavoriteCount(song.id);
-                await songService.updateLikesCount(song.id, newCount);
-
-                console.log('Removed from favorites:', song.title);
-                console.log('Updated likes count to:', newCount);
-            } else {
-                // Add to favorites
-                setFavorites(prev => [song, ...prev]);
-                setFavoriteIds(prev => [song.id, ...prev]);
-                await favoriteService.addFavorite(user.uid, song.id);
-
-                // Update song likes count
-                const newCount = await favoriteService.getFavoriteCount(song.id);
-                await songService.updateLikesCount(song.id, newCount);
-
-                console.log('Added to favorites:', song.title);
-                console.log('Updated likes count to:', newCount);
-            }
-        } catch (error) {
-            console.error('Error toggling favorite:', error);
-            // Reload favorites on error to sync with server
-            await loadFavorites();
-        }
-    }, [user, favoriteIds, loadFavorites]);
-
-    const isFavorite = useCallback(
-        (songId) => favoriteIds.includes(songId),
-        [favoriteIds]
-    );
-
-    return (
-        <MusicContext.Provider
-            value={{
-                currentSong,
-                isPlaying,
-                playlist,
-                sound,
-                duration,
-                position,
-                favorites,
-                loadingFavorites,
-                playSong,
-                pauseSong,
-                resumeSong,
-                playNext,
-                playPrevious,
-                seek,
-                toggleFavorite,
-                isFavorite,
-                loadFavorites, // Export for manual refresh
-            }}
-        >
-            {children}
-        </MusicContext.Provider>
-    );
-};
+        // Favorites API
+        favorites: favoriteIds, // array<string>
+        isFavorite, // (songId) => boolean   <-- đã KHAI BÁO
+        toggleFavorite,
+        loadingFavorites,
+        loadFavorites: async () => {}, // giữ để không breaking, subscription đã auto
+      }}>
+      {children}
+    </MusicContext.Provider>
+  )
+}

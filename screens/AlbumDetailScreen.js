@@ -12,6 +12,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { MusicContext } from "../context/MusicContext"
 import { songService } from "../services/songService"
+import { formatSeconds } from "../utils/time"
 
 const AlbumDetailScreen = ({ route, navigation }) => {
   const { album } = route.params
@@ -57,10 +58,7 @@ const AlbumDetailScreen = ({ route, navigation }) => {
           {item.artist}
         </Text>
       </View>
-      <Text style={styles.songDuration}>
-        {Math.floor(item.duration / 60)}:
-        {String(item.duration % 60).padStart(2, "0")}
-      </Text>
+      <Text style={styles.songDuration}>{formatSeconds(item.duration)}</Text>
       <TouchableOpacity
         onPress={() => toggleFavorite(item)}
         style={styles.favoriteButton}>

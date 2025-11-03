@@ -144,10 +144,22 @@ const AppTabs = () => {
     <View style={{ flex: 1 }}>
       <Tab.Navigator
         tabBar={(props) => {
+          const getActiveRouteName = (route) => {
+            let r = route
+            // React Navigation v5/v6: state có thể nằm ở route.state hoặc route?.state?.routes...
+            while (r?.state && typeof r.state.index === "number") {
+              r = r.state.routes[r.state.index]
+            }
+            return r?.name
+          }
+
+          const currentTopRoute = props.state.routes[props.state.index]
+          const activeRouteName = getActiveRouteName(currentTopRoute)
+          const onPlayerScreen = activeRouteName === "Player"
           return (
             <View>
               {/* MiniPlayer - Show for non-admin or when not logged in */}
-              {userRole !== "ADMIN" && <MiniPlayer />}
+              {userRole !== "ADMIN" && !onPlayerScreen && <MiniPlayer />}
               <View
                 style={{
                   flexDirection: "row",
@@ -164,8 +176,8 @@ const AppTabs = () => {
                     options.tabBarLabel !== undefined
                       ? options.tabBarLabel
                       : options.title !== undefined
-                        ? options.title
-                        : route.name
+                      ? options.title
+                      : route.name
                   const isFocused = props.state.index === index
                   const IconComponent = options.tabBarIcon
 

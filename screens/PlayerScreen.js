@@ -3,6 +3,8 @@ import { View, StyleSheet, Image, TouchableOpacity, Text } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { MusicContext } from "../context/MusicContext"
 import Slider from "@react-native-community/slider"
+import useSongStats from "../hooks/useSongStats"
+import { formatMillis } from "../utils/time"
 
 const PlayerScreen = () => {
   const {
@@ -38,6 +40,8 @@ const PlayerScreen = () => {
       </View>
     )
   }
+
+  const stats = useSongStats(currentSong.id)
 
   return (
     <View style={styles.container}>
@@ -82,8 +86,8 @@ const PlayerScreen = () => {
           thumbTintColor="#1DB954"
         />
         <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>{formatTime(position)}</Text>
-          <Text style={styles.timeText}>{formatTime(duration)}</Text>
+          <Text style={styles.timeText}>{formatMillis(position)}</Text>
+          <Text style={styles.timeText}>{formatMillis(duration)}</Text>
         </View>
       </View>
 
@@ -116,11 +120,11 @@ const PlayerScreen = () => {
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
           <MaterialCommunityIcons name="play" size={20} color="#888" />
-          <Text style={styles.statText}>{currentSong.plays}</Text>
+          <Text style={styles.statText}>{stats.plays}</Text>
         </View>
         <View style={styles.statItem}>
           <MaterialCommunityIcons name="heart" size={20} color="#FF6B6B" />
-          <Text style={styles.statText}>{currentSong.likes}</Text>
+          <Text style={styles.statText}>{stats.likes}</Text>
         </View>
       </View>
     </View>

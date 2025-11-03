@@ -50,11 +50,11 @@ const GenreScreen = ({ navigation }) => {
           color="#fff"
         />
         <Text style={styles.genreName}>{item.name}</Text>
-        {item.description && (
+        {/* {item.description && (
           <Text style={styles.genreDescription} numberOfLines={2}>
             {item.description}
           </Text>
-        )}
+        )} */}
       </View>
     </TouchableOpacity>
   )
@@ -106,7 +106,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#1a1a1a",
-    paddingTop: 30,
   },
   header: {
     paddingHorizontal: 20,
