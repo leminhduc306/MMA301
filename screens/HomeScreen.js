@@ -362,7 +362,7 @@ const HomeScreen = ({ navigation }) => {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1a1a1a", paddingTop: 30 },
+  container: { flex: 1, backgroundColor: "#1a1a1a" },
   header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 },
   headerTitle: { fontSize: 28, fontWeight: "bold", color: "#fff" },
 

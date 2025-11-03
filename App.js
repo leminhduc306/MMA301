@@ -1,10 +1,12 @@
 import React, { useContext, useEffect } from "react"
 import { ActivityIndicator, View, TouchableOpacity, Text } from "react-native"
-import { NavigationContainer } from "@react-navigation/native"
+import { NavigationContainer, DarkTheme } from "@react-navigation/native"
 import { createStackNavigator } from "@react-navigation/stack"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
-import { StatusBar } from "expo-status-bar"
+import { StatusBar as ExpoStatusBar } from "expo-status-bar"
+import { StatusBar as RNStatusBar, Platform } from "react-native"
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"
 
 import { AuthProvider, AuthContext } from "./context/AuthContext"
 import { MusicProvider } from "./context/MusicContext"
@@ -314,7 +316,7 @@ const RootNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={{ ...DarkTheme }}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {/* Luôn vào Tabs trước, không chặn bởi login */}
         <Stack.Screen name="MainTabs" component={AppTabs} />
@@ -342,11 +344,26 @@ const RootNavigator = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <MusicProvider>
-        <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-        <RootNavigator />
-      </MusicProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <MusicProvider>
+          {Platform.OS === "ios" && <ExpoStatusBar style="light" />}
+          {/* Android: dùng RN StatusBar để chắc chắn icon trắng */}
+          {Platform.OS === "android" && (
+            <RNStatusBar
+              barStyle="light-content"
+              backgroundColor="#1a1a1a"
+              translucent={false}
+            />
+          )}
+          {/* Đảm bảo tai thỏ có nền tối và không bị đè */}
+          <SafeAreaView
+            style={{ flex: 1, backgroundColor: "#1a1a1a" }}
+            edges={["top"]}>
+            <RootNavigator />
+          </SafeAreaView>
+        </MusicProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   )
 }
