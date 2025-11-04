@@ -221,7 +221,7 @@ const HomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>ZingMP3</Text>
+        <Text style={styles.headerTitle}>Musium</Text>
       </View>
 
       <ScrollView
